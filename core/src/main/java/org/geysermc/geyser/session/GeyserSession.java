@@ -1421,19 +1421,19 @@ public class GeyserSession implements GeyserConnection, GeyserCommandSource {
     }
 
     @Override
-    public String name() {
-        return null;
+    public @NonNull String name() {
+        return playerEntity.getUsername();
     }
 
     @Override
-    public void sendMessage(String message) {
+    public void sendMessage(@NonNull String legacyMessage) {
         TextPacket textPacket = new TextPacket();
         textPacket.setPlatformChatId("");
         textPacket.setSourceName("");
         textPacket.setXuid("");
         textPacket.setType(TextPacket.Type.CHAT);
         textPacket.setNeedsTranslation(false);
-        textPacket.setMessage(message);
+        textPacket.setMessage(legacyMessage); // todo remove legacy formatting chars that don't exist on bedrock
 
         upstream.sendPacket(textPacket);
     }
@@ -1444,7 +1444,7 @@ public class GeyserSession implements GeyserConnection, GeyserCommandSource {
     }
 
     @Override
-    public String locale() {
+    public @NonNull String locale() {
         return clientData.getLanguageCode();
     }
 
@@ -1706,7 +1706,7 @@ public class GeyserSession implements GeyserConnection, GeyserCommandSource {
      * @return true if the player has the requested permission, false if not
      */
     @Override
-    public boolean hasPermission(String permission) {
+    public boolean hasPermission(@NonNull String permission) {
         return geyser.getWorldManager().hasPermission(this, permission);
     }
 
@@ -1873,7 +1873,7 @@ public class GeyserSession implements GeyserConnection, GeyserCommandSource {
     }
 
     @Override
-    public String bedrockUsername() {
+    public @NonNull String bedrockUsername() {
         return authData.name();
     }
 
@@ -1888,7 +1888,7 @@ public class GeyserSession implements GeyserConnection, GeyserCommandSource {
     }
 
     @Override
-    public String xuid() {
+    public @NonNull String xuid() {
         return authData.xuid();
     }
 

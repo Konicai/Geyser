@@ -37,22 +37,23 @@ public interface CommandSource {
      *
      * @return the name of the command source
      */
+    @NonNull
     String name();
 
     /**
-     * Sends the given message to the command source
+     * Sends the given legacy message to the command source
      *
-     * @param message the message to send
+     * @param legacyMessage the message to send
      */
-    void sendMessage(@NonNull String message);
+    void sendMessage(@NonNull String legacyMessage);
 
     /**
-     * Sends the given messages to the command source
+     * Sends the given legacy messages to the command source
      *
-     * @param messages the messages to send
+     * @param legacyMessages the messages to send
      */
-    default void sendMessage(String[] messages) {
-        for (String message : messages) {
+    default void sendMessage(@NonNull String @NonNull [] legacyMessages) {
+        for (String message : legacyMessages) {
             sendMessage(message);
         }
     }
@@ -69,6 +70,7 @@ public interface CommandSource {
      *
      * @return the locale of the command source.
      */
+    @NonNull
     String locale();
 
     /**
@@ -77,5 +79,5 @@ public interface CommandSource {
      * @param permission The permission node to check
      * @return true if this command source has a permission
      */
-    boolean hasPermission(String permission);
+    boolean hasPermission(@NonNull String permission);
 }

@@ -37,6 +37,7 @@ public class JavaPlayerChatTranslator extends PacketTranslator<ClientboundPlayer
 
     @Override
     public void translate(GeyserSession session, ClientboundPlayerChatPacket packet) {
+        // todo: is packet.getContent() always plaintext?
         Component message = packet.getUnsignedContent() == null ? Component.text(packet.getContent()) : packet.getUnsignedContent();
         MessageTranslator.handleChatPacket(session, message, packet.getChatType(), packet.getTargetName(), packet.getName());
     }

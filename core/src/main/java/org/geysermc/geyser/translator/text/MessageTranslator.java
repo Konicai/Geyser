@@ -297,7 +297,7 @@ public class MessageTranslator {
         TextPacket textPacket = new TextPacket();
         textPacket.setPlatformChatId("");
         textPacket.setSourceName("");
-        textPacket.setXuid(session.getAuthData().xuid());
+        textPacket.setXuid(session.getAuthData().xuid()); // todo: is this suppose to be the xuid of the sender instead?
         textPacket.setType(TextPacket.Type.CHAT);
 
         textPacket.setNeedsTranslation(false);

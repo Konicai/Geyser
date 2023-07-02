@@ -30,6 +30,7 @@ import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.geysermc.geyser.command.GeyserCommandSource;
 import org.geysermc.geyser.text.GeyserLocale;
 
@@ -46,7 +47,7 @@ public class VelocityCommandSource implements GeyserCommandSource {
     }
 
     @Override
-    public String name() {
+    public @NonNull String name() {
         if (handle instanceof Player) {
             return ((Player) handle).getUsername();
         } else if (handle instanceof ConsoleCommandSource) {
@@ -56,8 +57,8 @@ public class VelocityCommandSource implements GeyserCommandSource {
     }
 
     @Override
-    public void sendMessage(String message) {
-        handle.sendMessage(LegacyComponentSerializer.legacy('§').deserialize(message));
+    public void sendMessage(@NonNull String legacyMessage) {
+        handle.sendMessage(LegacyComponentSerializer.legacySection().deserialize(legacyMessage));
     }
 
     @Override
@@ -72,7 +73,7 @@ public class VelocityCommandSource implements GeyserCommandSource {
     }
 
     @Override
-    public String locale() {
+    public @NonNull String locale() {
         if (handle instanceof Player) {
             Locale locale = ((Player) handle).getPlayerSettings().getLocale();
             return GeyserLocale.formatLocale(locale.getLanguage() + "_" + locale.getCountry());
@@ -81,7 +82,7 @@ public class VelocityCommandSource implements GeyserCommandSource {
     }
 
     @Override
-    public boolean hasPermission(String permission) {
+    public boolean hasPermission(@NonNull String permission) {
         return handle.hasPermission(permission);
     }
 }

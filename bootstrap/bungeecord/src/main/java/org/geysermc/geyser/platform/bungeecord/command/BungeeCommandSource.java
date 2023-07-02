@@ -29,6 +29,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.bungeecord.BungeeComponentSerializer;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.geysermc.geyser.command.GeyserCommandSource;
 import org.geysermc.geyser.text.GeyserLocale;
 
@@ -45,13 +46,13 @@ public class BungeeCommandSource implements GeyserCommandSource {
     }
 
     @Override
-    public String name() {
+    public @NonNull String name() {
         return handle.getName();
     }
 
     @Override
-    public void sendMessage(String message) {
-        handle.sendMessage(TextComponent.fromLegacyText(message));
+    public void sendMessage(@NonNull String legacyMessage) {
+        handle.sendMessage(TextComponent.fromLegacyText(legacyMessage));
     }
 
     private static final int PROTOCOL_HEX_COLOR = 713; // Added 20w17a
@@ -72,7 +73,7 @@ public class BungeeCommandSource implements GeyserCommandSource {
     }
 
     @Override
-    public String locale() {
+    public @NonNull String locale() {
         if (handle instanceof ProxiedPlayer player) {
             Locale locale = player.getLocale();
             if (locale != null) {
@@ -84,7 +85,7 @@ public class BungeeCommandSource implements GeyserCommandSource {
     }
 
     @Override
-    public boolean hasPermission(String permission) {
+    public boolean hasPermission(@NonNull String permission) {
         return handle.hasPermission(permission);
     }
 }

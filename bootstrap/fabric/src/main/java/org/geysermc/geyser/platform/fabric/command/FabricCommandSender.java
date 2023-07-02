@@ -30,11 +30,8 @@ import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import org.geysermc.geyser.GeyserImpl;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.geysermc.geyser.command.GeyserCommandSource;
-import org.geysermc.geyser.text.ChatColor;
-
-import javax.annotation.Nonnull;
 
 public class FabricCommandSender implements GeyserCommandSource {
 
@@ -45,27 +42,22 @@ public class FabricCommandSender implements GeyserCommandSource {
     }
 
     @Override
-    public String name() {
+    public @NonNull String name() {
         return source.getTextName();
     }
 
     @Override
-    public void sendMessage(@Nonnull String message) {
-        if (source.getEntity() instanceof ServerPlayer) {
-            ((ServerPlayer) source.getEntity()).displayClientMessage(Component.literal(message), false);
-        } else {
-            GeyserImpl.getInstance().getLogger().info(ChatColor.toANSI(message + ChatColor.RESET));
-        }
+    public void sendMessage(@NonNull String legacyMessage) {
+        source.sendSystemMessage(Component.literal(legacyMessage));
     }
 
     @Override
     public void sendMessage(net.kyori.adventure.text.Component message) {
-        if (source.getEntity() instanceof ServerPlayer player) {
-            String decoded = GsonComponentSerializer.gson().serialize(message);
-            player.displayClientMessage(Component.Serializer.fromJson(decoded), false);
-            return;
+        String decoded = GsonComponentSerializer.gson().serialize(message);
+        Component component = Component.Serializer.fromJson(decoded);
+        if (component != null) {
+            source.sendSystemMessage(component); // todo: does this regress anything?
         }
-        GeyserCommandSource.super.sendMessage(message);
     }
 
     @Override
@@ -74,7 +66,7 @@ public class FabricCommandSender implements GeyserCommandSource {
     }
 
     @Override
-    public boolean hasPermission(String permission) {
+    public boolean hasPermission(@NonNull String permission) {
         return Permissions.check(source, permission);
     }
 }

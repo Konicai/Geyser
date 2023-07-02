@@ -29,6 +29,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.bungeecord.BungeeComponentSerializer;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.geysermc.geyser.command.GeyserCommandSource;
 import org.geysermc.geyser.platform.spigot.PaperAdventure;
 import org.geysermc.geyser.text.GeyserLocale;
@@ -43,13 +44,13 @@ public class SpigotCommandSource implements GeyserCommandSource {
     }
 
     @Override
-    public String name() {
+    public @NonNull String name() {
         return handle.getName();
     }
 
     @Override
-    public void sendMessage(String message) {
-        handle.sendMessage(message);
+    public void sendMessage(@NonNull String legacyMessage) {
+        handle.sendMessage(legacyMessage);
     }
 
     @Override
@@ -59,6 +60,7 @@ public class SpigotCommandSource implements GeyserCommandSource {
             return;
         }
 
+        // todo: check if BungeeComponentSerializer.legacy() should be used? (See BungeeCommandSender)
         // CommandSender#sendMessage(BaseComponent[]) is Paper-only
         handle.spigot().sendMessage(BungeeComponentSerializer.get().serialize(message));
     }
@@ -69,7 +71,7 @@ public class SpigotCommandSource implements GeyserCommandSource {
     }
 
     @Override
-    public String locale() {
+    public @NonNull String locale() {
         if (this.handle instanceof Player player) {
             return player.getLocale();
         }
@@ -78,7 +80,7 @@ public class SpigotCommandSource implements GeyserCommandSource {
     }
 
     @Override
-    public boolean hasPermission(String permission) {
+    public boolean hasPermission(@NonNull String permission) {
         return handle.hasPermission(permission);
     }
 }

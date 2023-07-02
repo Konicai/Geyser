@@ -26,6 +26,7 @@
 package org.geysermc.geyser;
 
 import net.kyori.adventure.text.Component;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.geysermc.geyser.command.GeyserCommandSource;
 
 import javax.annotation.Nullable;
@@ -114,13 +115,13 @@ public interface GeyserLogger extends GeyserCommandSource {
     boolean isDebug();
 
     @Override
-    default String name() {
+    default @NonNull String name() {
         return "CONSOLE";
     }
 
     @Override
-    default void sendMessage(String message) {
-        info(message);
+    default void sendMessage(@NonNull String legacyMessage) {
+        info(legacyMessage);
     }
 
     @Override
@@ -129,7 +130,7 @@ public interface GeyserLogger extends GeyserCommandSource {
     }
 
     @Override
-    default boolean hasPermission(String permission) {
+    default boolean hasPermission(@NonNull String permission) {
         return true;
     }
 }

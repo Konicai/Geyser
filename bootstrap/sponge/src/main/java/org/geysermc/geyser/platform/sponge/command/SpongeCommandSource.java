@@ -38,13 +38,13 @@ public class SpongeCommandSource implements GeyserCommandSource {
     private final CommandCause handle;
 
     @Override
-    public String name() {
+    public @NonNull String name() {
         return handle.friendlyIdentifier().orElse(handle.identifier());
     }
 
     @Override
-    public void sendMessage(@NonNull String message) {
-        handle.audience().sendMessage(LegacyComponentSerializer.legacySection().deserialize(message));
+    public void sendMessage(@NonNull String legacyMessage) {
+        handle.audience().sendMessage(LegacyComponentSerializer.legacySection().deserialize(legacyMessage));
     }
 
     @Override
@@ -53,7 +53,7 @@ public class SpongeCommandSource implements GeyserCommandSource {
     }
 
     @Override
-    public boolean hasPermission(String permission) {
+    public boolean hasPermission(@NonNull String permission) {
         return handle.hasPermission(permission);
     }
 }

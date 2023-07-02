@@ -25,6 +25,7 @@
 
 package org.geysermc.geyser.command;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.geysermc.geyser.api.command.CommandSource;
 import org.geysermc.geyser.text.GeyserLocale;
 import net.kyori.adventure.text.Component;
@@ -39,6 +40,7 @@ public interface GeyserCommandSource extends CommandSource {
     /**
      * {@inheritDoc}
      */
+    @NonNull
     default String locale() {
         return GeyserLocale.getDefaultLocale();
     }
