@@ -60,7 +60,6 @@ public class SpigotCommandSource implements GeyserCommandSource {
             return;
         }
 
-        // todo: check if BungeeComponentSerializer.legacy() should be used? (See BungeeCommandSender)
         // CommandSender#sendMessage(BaseComponent[]) is Paper-only
         handle.spigot().sendMessage(BungeeComponentSerializer.get().serialize(message));
     }
