@@ -1431,8 +1431,8 @@ public class GeyserSession implements GeyserConnection, GeyserCommandSource {
     }
 
     @Override
-    public @NonNull UUID playerUuid() {
-        return playerEntity.getUuid();
+    public @MonotonicNonNull UUID playerUuid() {
+        return this.javaUuid();
     }
 
     @Override

@@ -29,21 +29,16 @@ import net.neoforged.neoforge.server.permission.events.PermissionGatherEvent;
 import net.neoforged.neoforge.server.permission.nodes.PermissionNode;
 import net.neoforged.neoforge.server.permission.nodes.PermissionTypes;
 import org.geysermc.geyser.GeyserImpl;
-import org.geysermc.geyser.api.event.lifecycle.GeyserRegisterPermissionsEvent;
 import org.geysermc.geyser.api.util.TriState;
+import org.geysermc.geyser.command.GeyserPermissionRegistrationEventImpl;
 import org.geysermc.geyser.platform.neoforge.mixin.PermissionNodeMixin;
 
 public class GeyserNeoForgePermissionHandler {
 
     public void onPermissionGather(PermissionGatherEvent.Nodes event) {
-        GeyserImpl.getInstance().eventBus().fire(
-            (GeyserRegisterPermissionsEvent) (permission, defaultValue) -> {
-                if (permission.isBlank()) {
-                    return;
-                }
-                registerNode(permission, defaultValue, event);
-            }
-        );
+        GeyserPermissionRegistrationEventImpl geyserEvent = new GeyserPermissionRegistrationEventImpl();
+        GeyserImpl.getInstance().eventBus().fire(geyserEvent);
+        geyserEvent.getPermissionDefaults().forEach((permission, permissionDefault) -> registerNode(permission, permissionDefault, event));
     }
 
     private void registerNode(String node, TriState permissionDefault, PermissionGatherEvent.Nodes event) {

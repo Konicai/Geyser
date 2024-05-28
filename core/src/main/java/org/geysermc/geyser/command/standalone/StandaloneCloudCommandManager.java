@@ -34,6 +34,7 @@ import org.geysermc.geyser.api.permission.PermissionChecker;
 import org.geysermc.geyser.api.util.TriState;
 import org.geysermc.geyser.command.CommandRegistry;
 import org.geysermc.geyser.command.GeyserCommandSource;
+import org.geysermc.geyser.command.GeyserPermissionRegistrationEventImpl;
 import org.geysermc.geyser.util.FileUtils;
 import org.incendo.cloud.CommandManager;
 import org.incendo.cloud.execution.ExecutionCoordinator;
@@ -85,11 +86,11 @@ public class StandaloneCloudCommandManager extends CommandManager<GeyserCommandS
      * permissions. This should be called after any event listeners have been registered, such as that of {@link CommandRegistry}.
      */
     public void gatherPermissions() {
-        geyser.getEventBus().fire((GeyserRegisterPermissionsEvent) (permission, def) -> {
-            if (permission.isBlank()) {
-                return;
-            }
-            if (def == TriState.TRUE) {
+        GeyserPermissionRegistrationEventImpl event = new GeyserPermissionRegistrationEventImpl();
+        geyser.getEventBus().fire(event);
+
+        event.getPermissionDefaults().forEach((permission, defaultPermission) -> {
+            if (defaultPermission == TriState.TRUE) {
                 basePermissions.add(permission);
             }
         });

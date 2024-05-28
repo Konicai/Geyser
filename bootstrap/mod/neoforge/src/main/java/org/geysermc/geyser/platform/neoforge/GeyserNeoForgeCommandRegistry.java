@@ -26,7 +26,9 @@
 package org.geysermc.geyser.platform.neoforge;
 
 import org.geysermc.geyser.GeyserImpl;
+import org.geysermc.geyser.api.util.TriState;
 import org.geysermc.geyser.command.CommandRegistry;
+import org.geysermc.geyser.command.GeyserCommand;
 import org.geysermc.geyser.command.GeyserCommandSource;
 import org.incendo.cloud.CommandManager;
 import org.incendo.cloud.neoforge.PermissionNotRegisteredException;
@@ -44,6 +46,14 @@ public class GeyserNeoForgeCommandRegistry extends CommandRegistry {
             return super.hasPermission(source, permission);
         } catch (PermissionNotRegisteredException e) {
             return false;
+        }
+    }
+
+    @Override
+    protected void registerPermissionDefault(GeyserCommand command) {
+        if (!command.permission().isBlank()) {
+            TriState permissionDefault = command.permissionDefault() == null ? TriState.NOT_SET : command.permissionDefault();
+            permissionDefaults.put(command.permission(), permissionDefault);
         }
     }
 }

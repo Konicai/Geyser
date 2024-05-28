@@ -45,11 +45,11 @@ import org.geysermc.geyser.GeyserBootstrap;
 import org.geysermc.geyser.GeyserImpl;
 import org.geysermc.geyser.adapters.paper.PaperAdapters;
 import org.geysermc.geyser.adapters.spigot.SpigotAdapters;
-import org.geysermc.geyser.api.event.lifecycle.GeyserRegisterPermissionsEvent;
 import org.geysermc.geyser.api.util.PlatformType;
 import org.geysermc.geyser.command.CommandRegistry;
 import org.geysermc.geyser.command.CommandSourceConverter;
 import org.geysermc.geyser.command.GeyserCommandSource;
+import org.geysermc.geyser.command.GeyserPermissionRegistrationEventImpl;
 import org.geysermc.geyser.configuration.GeyserConfiguration;
 import org.geysermc.geyser.dump.BootstrapDumpInfo;
 import org.geysermc.geyser.level.WorldManager;
@@ -291,10 +291,11 @@ public class GeyserSpigotPlugin extends JavaPlugin implements GeyserBootstrap {
         // Register permissions so they appear in, for example, LuckPerms' UI
         // Re-registering permissions without removing it throws an error
         PluginManager pluginManager = Bukkit.getPluginManager();
-        geyser.eventBus().fire((GeyserRegisterPermissionsEvent) (permission, def) -> {
-            if (permission.isBlank()) {
-                return;
-            }
+
+        GeyserPermissionRegistrationEventImpl event = new GeyserPermissionRegistrationEventImpl();
+        geyser.eventBus().fire(event);
+
+        event.getPermissionDefaults().forEach((permission, def) -> {
             PermissionDefault permissionDefault = switch (def) {
                 case TRUE -> PermissionDefault.TRUE;
                 case FALSE -> PermissionDefault.FALSE;

@@ -82,7 +82,7 @@ public class CommandRegistry {
     /**
      * Map containing only permissions that have been registered with a default value
      */
-    private final Map<String, TriState> permissionDefaults = new Object2ObjectOpenHashMap<>(13);
+    protected final Map<String, TriState> permissionDefaults = new Object2ObjectOpenHashMap<>(13);
 
     public CommandRegistry(GeyserImpl geyser, CommandManager<GeyserCommandSource> cloud) {
         this.geyser = geyser;
@@ -136,7 +136,7 @@ public class CommandRegistry {
                 this.geyser,
                 "help",
                 "geyser.commands.exthelp.desc",
-                "geyser.command.exthelp." + id,
+                id + ".help",
                 extension.rootCommand(),
                 extension.description().id() + ".command",
                 entry.getValue()));
@@ -175,12 +175,10 @@ public class CommandRegistry {
             commands.put(alias, command);
         }
 
-        if (!command.permission().isBlank() && command.permissionDefault() != null) {
-            permissionDefaults.put(command.permission(), command.permissionDefault());
-        }
+        registerPermissionDefault(command);
 
         if (command instanceof HelpCommand helpCommand) {
-            permissionDefaults.put(helpCommand.rootCommand(), helpCommand.permissionDefault());
+            permissionDefaults.put(helpCommand.rootCommandPermission(), helpCommand.permissionDefault());
         }
     }
 
@@ -225,5 +223,14 @@ public class CommandRegistry {
      */
     public void runCommand(@NonNull GeyserCommandSource source, @NonNull String command) {
         cloud.commandExecutor().executeCommand(source, command);
+    }
+
+    /**
+     * Registers permission defaults, if necessary. Done in separate method to allow special handling on NeoForge.
+     */
+    protected void registerPermissionDefault(GeyserCommand command) {
+        if (!command.permission().isBlank() && command.permissionDefault() != null) {
+            permissionDefaults.put(command.permission(), command.permissionDefault());
+        }
     }
 }
