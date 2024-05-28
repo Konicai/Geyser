@@ -136,7 +136,7 @@ public class CommandRegistry {
                 this.geyser,
                 "help",
                 "geyser.commands.exthelp.desc",
-                id + ".help",
+                id + ".command.help",
                 extension.rootCommand(),
                 extension.description().id() + ".command",
                 entry.getValue()));
