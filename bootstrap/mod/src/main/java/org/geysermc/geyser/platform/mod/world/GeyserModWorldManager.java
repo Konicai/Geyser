@@ -25,6 +25,7 @@
 
 package org.geysermc.geyser.platform.mod.world;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
@@ -35,6 +36,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BannerBlockEntity;
@@ -46,7 +48,8 @@ import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.cloudburstmc.math.vector.Vector3i;
-import org.geysermc.geyser.level.GeyserWorldManager;
+import org.geysermc.geyser.level.GameRule;
+import org.geysermc.geyser.level.WorldManager;
 import org.geysermc.geyser.network.GameProtocol;
 import org.geysermc.geyser.platform.mod.GeyserModBootstrap;
 import org.geysermc.geyser.session.GeyserSession;
@@ -58,16 +61,27 @@ import org.geysermc.mcprotocollib.protocol.data.game.item.component.DataComponen
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
-public class GeyserModWorldManager extends GeyserWorldManager {
+public class GeyserModWorldManager extends WorldManager {
 
     private static final GsonComponentSerializer GSON_SERIALIZER = GsonComponentSerializer.gson();
     private final MinecraftServer server;
 
+    private final Map<String, GameRules.Key<?>> gameRules = new Object2ObjectOpenHashMap<>();
+
     public GeyserModWorldManager(MinecraftServer server) {
         this.server = server;
+
+        // Could access widen the internal map... this seems fine though.
+        GameRules.visitGameRuleTypes(new GameRules.GameRuleTypeVisitor() {
+            @Override
+            public <T extends GameRules.Value<T>> void visit(GameRules.@NonNull Key<T> key, GameRules.@NonNull Type<T> type) {
+                gameRules.put(key.getId(), key);
+            }
+        });
     }
 
     @Override
@@ -76,7 +90,7 @@ public class GeyserModWorldManager extends GeyserWorldManager {
         // same, fallback to the chunk cache. May be able to update this
         // in the future to use ViaVersion however, like Spigot does.
         if (SharedConstants.getCurrentVersion().getProtocolVersion() != GameProtocol.getJavaProtocolVersion()) {
-            return super.getBlockAt(session, x, y, z);
+            return session.getChunkCache().getBlockAt(x, y, z);
         }
 
         ServerPlayer player = this.getPlayer(session);
@@ -111,15 +125,39 @@ public class GeyserModWorldManager extends GeyserWorldManager {
         return SharedConstants.getCurrentVersion().getProtocolVersion() == GameProtocol.getJavaProtocolVersion();
     }
 
+    @SuppressWarnings("unchecked") // todo: do a proper type check when get geantyref
     @Override
-    public boolean hasPermission(GeyserSession session, String permission) {
+    public boolean getGameRuleBool(GeyserSession session, GameRule gameRule) {
         ServerPlayer player = getPlayer(session);
-        return GeyserModBootstrap.getInstance().hasPermission(player, permission);
+        GameRules.Key<GameRules.BooleanValue> key = (GameRules.Key<GameRules.BooleanValue>) gameRules.get(gameRule.getJavaID());
+        if (key != null) {
+            return player.level().getGameRules().getBoolean(key);
+        }
+
+        return gameRule.getDefaultBooleanValue();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public int getGameRuleInt(GeyserSession session, GameRule gameRule) {
+        ServerPlayer player = getPlayer(session);
+        GameRules.Key<GameRules.IntegerValue> key = (GameRules.Key<GameRules.IntegerValue>) gameRules.get(gameRule.getJavaID());
+        if (key != null) {
+            return player.level().getGameRules().getInt(key);
+        }
+
+        return gameRule.getDefaultIntValue();
     }
 
     @Override
     public GameMode getDefaultGameMode(GeyserSession session) {
         return GameMode.byId(server.getDefaultGameType().getId());
+    }
+
+    @Override
+    public boolean hasPermission(GeyserSession session, String permission) {
+        ServerPlayer player = getPlayer(session);
+        return GeyserModBootstrap.getInstance().hasPermission(player, permission);
     }
 
     @NonNull
