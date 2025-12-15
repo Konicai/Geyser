@@ -32,7 +32,7 @@ import org.geysermc.geyser.session.GeyserSession;
 
 /**
  * Bare bones implementation of BedrockPacketHandler suitable for extension.
- *
+ * <p>
  * Logs and ignores all packets presented. Allows subclasses to override/implement only
  * packets of interest and limit boilerplate code.
  */
@@ -57,11 +57,6 @@ public class LoggingPacketHandler implements BedrockPacketHandler {
 
     @Override
     public PacketSignal handle(ResourcePackClientResponsePacket packet) {
-        return defaultHandler(packet);
-    }
-
-    @Override
-    public PacketSignal handle(AdventureSettingsPacket packet) {
         return defaultHandler(packet);
     }
 
@@ -106,6 +101,16 @@ public class LoggingPacketHandler implements BedrockPacketHandler {
     }
 
     @Override
+    public PacketSignal handle(CameraPresetsPacket packet) {
+        return defaultHandler(packet);
+    }
+
+    @Override
+    public PacketSignal handle(CameraInstructionPacket packet) {
+        return defaultHandler(packet);
+    }
+
+    @Override
     public PacketSignal handle(CommandBlockUpdatePacket packet) {
         return defaultHandler(packet);
     }
@@ -117,11 +122,6 @@ public class LoggingPacketHandler implements BedrockPacketHandler {
 
     @Override
     public PacketSignal handle(ContainerClosePacket packet) {
-        return defaultHandler(packet);
-    }
-
-    @Override
-    public PacketSignal handle(CraftingEventPacket packet) {
         return defaultHandler(packet);
     }
 
@@ -157,11 +157,6 @@ public class LoggingPacketHandler implements BedrockPacketHandler {
 
     @Override
     public PacketSignal handle(InventoryTransactionPacket packet) {
-        return defaultHandler(packet);
-    }
-
-    @Override
-    public PacketSignal handle(ItemFrameDropItemPacket packet) {
         return defaultHandler(packet);
     }
 
@@ -256,6 +251,11 @@ public class LoggingPacketHandler implements BedrockPacketHandler {
     }
 
     @Override
+    public PacketSignal handle(RequestPermissionsPacket packet) {
+        return defaultHandler(packet);
+    }
+
+    @Override
     public PacketSignal handle(ResourcePackChunkRequestPacket packet) {
         return defaultHandler(packet);
     }
@@ -282,6 +282,11 @@ public class LoggingPacketHandler implements BedrockPacketHandler {
 
     @Override
     public PacketSignal handle(SetPlayerGameTypePacket packet) {
+        return defaultHandler(packet);
+    }
+
+    @Override
+    public PacketSignal handle(SubChunkRequestPacket packet) {
         return defaultHandler(packet);
     }
 
@@ -501,11 +506,6 @@ public class LoggingPacketHandler implements BedrockPacketHandler {
     }
 
     @Override
-    public PacketSignal handle(ScriptCustomEventPacket packet) {
-        return defaultHandler(packet);
-    }
-
-    @Override
     public PacketSignal handle(ServerSettingsResponsePacket packet) {
         return defaultHandler(packet);
     }
@@ -552,6 +552,11 @@ public class LoggingPacketHandler implements BedrockPacketHandler {
 
     @Override
     public PacketSignal handle(SetLastHurtByPacket packet) {
+        return defaultHandler(packet);
+    }
+
+    @Override
+    public PacketSignal handle(SetPlayerInventoryOptionsPacket packet) {
         return defaultHandler(packet);
     }
 
@@ -867,6 +872,38 @@ public class LoggingPacketHandler implements BedrockPacketHandler {
 
     @Override
     public PacketSignal handle(RequestNetworkSettingsPacket packet) {
+        return defaultHandler(packet);
+    }
+
+    // todo: fix arrangement
+
+    @Override
+    public PacketSignal handle(ToggleCrafterSlotRequestPacket packet) {
+        return defaultHandler(packet);
+    }
+
+    @Override
+    public PacketSignal handle(TrimDataPacket packet) {
+        return defaultHandler(packet);
+    }
+
+    @Override
+    public PacketSignal handle(MovementPredictionSyncPacket packet) {
+        return defaultHandler(packet);
+    }
+
+    @Override
+    public PacketSignal handle(ServerboundDiagnosticsPacket packet) {
+        return defaultHandler(packet);
+    }
+
+    @Override
+    public PacketSignal handle(UpdateClientOptionsPacket packet) {
+        return defaultHandler(packet);
+    }
+
+    @Override
+    public PacketSignal handle(PlayerUpdateEntityOverridesPacket packet) {
         return defaultHandler(packet);
     }
 }

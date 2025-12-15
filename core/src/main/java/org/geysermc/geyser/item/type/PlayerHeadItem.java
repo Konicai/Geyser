@@ -25,46 +25,51 @@
 
 package org.geysermc.geyser.item.type;
 
-import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
-import com.github.steveice10.opennbt.tag.builtin.StringTag;
-import com.github.steveice10.opennbt.tag.builtin.Tag;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.geysermc.geyser.item.TooltipOptions;
+import org.geysermc.geyser.item.components.Rarity;
+import org.geysermc.geyser.level.block.type.Block;
 import org.geysermc.geyser.session.GeyserSession;
+import org.geysermc.geyser.skin.SkinManager;
 import org.geysermc.geyser.text.ChatColor;
 import org.geysermc.geyser.text.MinecraftLocale;
+import org.geysermc.geyser.translator.item.BedrockItemBuilder;
+import org.geysermc.mcprotocollib.auth.GameProfile;
+import org.geysermc.mcprotocollib.protocol.data.game.entity.player.ResolvableProfile;
+import org.geysermc.mcprotocollib.protocol.data.game.item.component.DataComponentTypes;
+import org.geysermc.mcprotocollib.protocol.data.game.item.component.DataComponents;
 
-public class PlayerHeadItem extends Item {
-    public PlayerHeadItem(String javaIdentifier, Builder builder) {
-        super(javaIdentifier, builder);
+public class PlayerHeadItem extends BlockItem {
+    public PlayerHeadItem(Builder builder, Block block, Block... otherBlocks) {
+        super(builder, block, otherBlocks);
     }
 
     @Override
-    public void translateNbtToBedrock(@NonNull GeyserSession session, @NonNull CompoundTag tag) {
-        super.translateNbtToBedrock(session, tag);
+    public void translateComponentsToBedrock(@NonNull GeyserSession session, @NonNull DataComponents components, @NonNull TooltipOptions tooltip, @NonNull BedrockItemBuilder builder) {
+        super.translateComponentsToBedrock(session, components, tooltip, builder);
 
-        Tag display = tag.get("display");
-        if (!(display instanceof CompoundTag) || !((CompoundTag) display).contains("Name")) {
-            Tag skullOwner = tag.get("SkullOwner");
-            if (skullOwner != null) {
-                StringTag name;
-                if (skullOwner instanceof StringTag) {
-                    name = (StringTag) skullOwner;
+        // Use the correct color, determined by the rarity of the item
+        char rarity = Rarity.fromId(components.getOrDefault(DataComponentTypes.RARITY, Rarity.COMMON.ordinal())).getColor();
+
+        ResolvableProfile profile = components.get(DataComponentTypes.PROFILE);
+        if (profile != null) {
+            // Ideally we'd update the item once the profile is resolved,
+            // but there's no good way of doing this as we don't know where the item is in an inventory after we have translated it
+            // So, we request a resolve here, and if the profile has already been resolved it will be returned instantly from cache.
+            // If not, the next time the item will be translated the profile will probably have been resolved
+            GameProfile resolved = SkinManager.resolveProfile(profile).getNow(null);
+            if (resolved != null) {
+                String name = resolved.getName();
+                if (name != null) {
+                    // Add correct name of player skull
+                    String displayName = ChatColor.RESET + ChatColor.ESCAPE + rarity +
+                        MinecraftLocale.getLocaleString("block.minecraft.player_head.named", session.locale()).replace("%s", name);
+                    builder.setCustomName(displayName);
                 } else {
-                    StringTag skullName;
-                    if (skullOwner instanceof CompoundTag && (skullName = ((CompoundTag) skullOwner).get("Name")) != null) {
-                        name = skullName;
-                    } else {
-                        session.getGeyser().getLogger().debug("Not sure how to handle skull head item display. " + tag);
-                        return;
-                    }
+                    // No name found so default to "Player Head"
+                    builder.setCustomName(ChatColor.RESET + ChatColor.ESCAPE + rarity +
+                        MinecraftLocale.getLocaleString("block.minecraft.player_head", session.locale()));
                 }
-                // Add correct name of player skull
-                // TODO: It's always yellow, even with a custom name. Handle?
-                String displayName = ChatColor.RESET + ChatColor.YELLOW + MinecraftLocale.getLocaleString("block.minecraft.player_head.named", session.locale()).replace("%s", name.getValue());
-                if (!(display instanceof CompoundTag)) {
-                    tag.put(display = new CompoundTag("display"));
-                }
-                ((CompoundTag) display).put(new StringTag("Name", displayName));
             }
         }
     }

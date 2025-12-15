@@ -25,8 +25,9 @@
 
 package org.geysermc.geyser.util;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.cloudburstmc.protocol.bedrock.packet.SetTitlePacket;
-import org.geysermc.geyser.configuration.CooldownType;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.session.cache.PreferencesCache;
 import org.geysermc.geyser.text.ChatColor;
@@ -35,29 +36,22 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Manages the sending of a cooldown indicator to the Bedrock player as there is no cooldown indicator in Bedrock.
- * Much of the work here is from the wonderful folks from ViaRewind: https://github.com/ViaVersion/ViaRewind
+ * Much of the work here is from the wonderful folks from <a href="https://github.com/ViaVersion/ViaRewind">ViaRewind</a>
  */
 public class CooldownUtils {
-    private static CooldownType DEFAULT_SHOW_COOLDOWN;
-
-    public static void setDefaultShowCooldown(CooldownType showCooldown) {
-        DEFAULT_SHOW_COOLDOWN = showCooldown;
-    }
-
-    public static CooldownType getDefaultShowCooldown() {
-        return DEFAULT_SHOW_COOLDOWN;
-    }
-
     /**
      * Starts sending the fake cooldown to the Bedrock client. If the cooldown is not disabled, the sent type is the cooldownPreference in {@link PreferencesCache}
+     *
      * @param session GeyserSession
      */
     public static void sendCooldown(GeyserSession session) {
-        if (DEFAULT_SHOW_COOLDOWN == CooldownType.DISABLED) return;
+        if (session.getGeyser().config().gameplay().showCooldown() == CooldownType.DISABLED) return;
         CooldownType sessionPreference = session.getPreferencesCache().getEffectiveCooldown();
         if (sessionPreference == CooldownType.DISABLED) return;
 
-        if (session.getAttackSpeed() == 0.0 || session.getAttackSpeed() > 20) return; // 0.0 usually happens on login and causes issues with visuals; anything above 20 means a plugin like OldCombatMechanics is being used
+        if (session.getAttackSpeed() == 0.0 || session.getAttackSpeed() > 20) {
+            return; // 0.0 usually happens on login and causes issues with visuals; anything above 20 means a plugin like OldCombatMechanics is being used
+        }
         // Set the times to stay a bit with no fade in nor out
         SetTitlePacket titlePacket = new SetTitlePacket();
         titlePacket.setType(SetTitlePacket.Type.TIMES);
@@ -69,13 +63,16 @@ public class CooldownUtils {
 
         session.getWorldCache().markTitleTimesAsIncorrect();
 
-        // Needs to be sent or no subtitle packet is recognized by the client
-        titlePacket = new SetTitlePacket();
-        titlePacket.setType(SetTitlePacket.Type.TITLE);
-        titlePacket.setText(" ");
-        titlePacket.setXuid("");
-        titlePacket.setPlatformOnlineId("");
-        session.sendUpstreamPacket(titlePacket);
+        // Actionbars don't need an empty title
+        if (sessionPreference == CooldownType.TITLE) {
+            // Needs to be sent or no subtitle packet is recognized by the client
+            titlePacket = new SetTitlePacket();
+            titlePacket.setType(SetTitlePacket.Type.TITLE);
+            titlePacket.setText(" ");
+            titlePacket.setXuid("");
+            titlePacket.setPlatformOnlineId("");
+            session.sendUpstreamPacket(titlePacket);
+        }
         session.setLastHitTime(System.currentTimeMillis());
         long lastHitTime = session.getLastHitTime(); // Used later to prevent multiple scheduled cooldown threads
         computeCooldown(session, sessionPreference, lastHitTime);
@@ -83,6 +80,7 @@ public class CooldownUtils {
 
     /**
      * Keeps updating the cooldown until the bar is complete.
+     *
      * @param session GeyserSession
      * @param sessionPreference The type of cooldown the client prefers
      * @param lastHitTime The time of the last hit. Used to gauge how long the cooldown is taking.
@@ -102,7 +100,7 @@ public class CooldownUtils {
         session.sendUpstreamPacket(titlePacket);
         if (hasCooldown(session)) {
             session.scheduleInEventLoop(() ->
-                    computeCooldown(session, sessionPreference, lastHitTime), 50, TimeUnit.MILLISECONDS); // Updated per tick. 1000 divided by 20 ticks equals 50
+                    computeCooldown(session, sessionPreference, lastHitTime), (long) restrain(session.getMillisecondsPerTick(), 50), TimeUnit.MILLISECONDS); // Updated per tick. 1000 divided by 20 ticks equals 50
         } else {
             SetTitlePacket removeTitlePacket = new SetTitlePacket();
             removeTitlePacket.setType(SetTitlePacket.Type.CLEAR);
@@ -115,8 +113,9 @@ public class CooldownUtils {
 
     private static boolean hasCooldown(GeyserSession session) {
         long time = System.currentTimeMillis() - session.getLastHitTime();
-        double cooldown = restrain(((double) time) * session.getAttackSpeed() / 1000d, 1.5);
-        return cooldown < 1.1;
+        double tickrateMultiplier = Math.max(session.getMillisecondsPerTick() / 50, 1.0);
+        double cooldown = restrain(((double) time) * session.getAttackSpeed() / (tickrateMultiplier * 1000.0), 1.0);
+        return cooldown < 1.0;
     }
 
 
@@ -128,7 +127,8 @@ public class CooldownUtils {
 
     private static String getTitle(GeyserSession session) {
         long time = System.currentTimeMillis() - session.getLastHitTime();
-        double cooldown = restrain(((double) time) * session.getAttackSpeed() / 1000d, 1);
+        double tickrateMultiplier = Math.max(session.getMillisecondsPerTick() / 50, 1.0);
+        double cooldown = restrain(((double) time) * session.getAttackSpeed() / (tickrateMultiplier * 1000.0), 1.0);
 
         int darkGrey = (int) Math.floor(10d * cooldown);
         int grey = 10 - darkGrey;
@@ -145,4 +145,32 @@ public class CooldownUtils {
         return builder.toString();
     }
 
+    @Getter
+    @AllArgsConstructor
+    public enum CooldownType {
+        TITLE("options.attack.crosshair"),
+        ACTIONBAR("options.attack.hotbar"),
+        DISABLED("options.off");
+
+        public static final String OPTION_DESCRIPTION = "options.attackIndicator";
+        public static final CooldownType[] VALUES = values();
+
+        private final String translation;
+
+        /**
+         * Convert the CooldownType string (from config) to the enum, DISABLED on fail
+         *
+         * @param name CooldownType string
+         *
+         * @return The converted CooldownType
+         */
+        public static CooldownType getByName(String name) {
+            for (CooldownType type : VALUES) {
+                if (type.name().equalsIgnoreCase(name)) {
+                    return type;
+                }
+            }
+            return DISABLED;
+        }
+    }
 }

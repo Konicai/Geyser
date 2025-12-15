@@ -34,7 +34,7 @@ import org.geysermc.geyser.GeyserImpl;
 /**
  * Disables the compression packet (and the compression handlers from being added to the pipeline) for Geyser clients
  * that won't be receiving the data over the network.
- *
+ * <p>
  * As of 1.8 - 1.17.1, compression is enabled in the Netty pipeline by adding a listener after a packet is written.
  * If we simply "cancel" or don't forward the packet, then the listener is never called.
  */
@@ -96,19 +96,31 @@ public class GeyserSpigotCompressionDisabler extends ChannelOutboundHandlerAdapt
 
     private static Class<?> findCompressionPacket() throws ClassNotFoundException {
         try {
-            return Class.forName("net.minecraft.network.protocol.login.PacketLoginOutSetCompression");
+            // Mojmaps
+            return Class.forName("net.minecraft.network.protocol.login.ClientboundLoginCompressionPacket");
         } catch (ClassNotFoundException e) {
-            String prefix = Bukkit.getServer().getClass().getPackage().getName().replace("org.bukkit.craftbukkit", "net.minecraft.server");
-            return Class.forName(prefix + ".PacketLoginOutSetCompression");
+            try {
+                // Spigot mappings
+                return Class.forName("net.minecraft.network.protocol.login.PacketLoginOutSetCompression");
+            } catch (ClassNotFoundException ex) {
+                String prefix = Bukkit.getServer().getClass().getPackage().getName().replace("org.bukkit.craftbukkit", "net.minecraft.server");
+                return Class.forName(prefix + ".PacketLoginOutSetCompression");
+            }
         }
     }
 
     private static Class<?> findLoginSuccessPacket() throws ClassNotFoundException {
         try {
-            return Class.forName("net.minecraft.network.protocol.login.PacketLoginOutSuccess");
+            // Mojmaps
+            return Class.forName("net.minecraft.network.protocol.login.ClientboundLoginFinishedPacket");
         } catch (ClassNotFoundException e) {
-            String prefix = Bukkit.getServer().getClass().getPackage().getName().replace("org.bukkit.craftbukkit", "net.minecraft.server");
-            return Class.forName(prefix + ".PacketLoginOutSuccess");
+            try {
+                // Spigot mappings
+                return Class.forName("net.minecraft.network.protocol.login.PacketLoginOutSuccess");
+            } catch (ClassNotFoundException ex) {
+                String prefix = Bukkit.getServer().getClass().getPackage().getName().replace("org.bukkit.craftbukkit", "net.minecraft.server");
+                return Class.forName(prefix + ".PacketLoginOutSuccess");
+            }
         }
     }
 }

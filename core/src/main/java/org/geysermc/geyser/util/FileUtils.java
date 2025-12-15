@@ -25,12 +25,17 @@
 
 package org.geysermc.geyser.util;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.geysermc.geyser.GeyserBootstrap;
 import org.geysermc.geyser.GeyserImpl;
+import org.spongepowered.configurate.ConfigurationNode;
+import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.annotation.Annotation;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -41,25 +46,18 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class FileUtils {
-
-    /**
-     * Load the given YAML file into the given class
-     *
-     * @param src File to load
-     * @param valueType Class to load file into
-     * @param <T> the type
-     * @return The data as the given class
-     * @throws IOException if the config could not be loaded
-     */
+public final class FileUtils {
     public static <T> T loadConfig(File src, Class<T> valueType) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
-        return objectMapper.readValue(src, valueType);
+        YamlConfigurationLoader loader = YamlConfigurationLoader.builder()
+            .file(src)
+            .build();
+        ConfigurationNode node = loader.load();
+        return node.get(valueType);
     }
 
-    public static <T> T loadJson(InputStream src, Class<T> valueType) throws IOException {
+    public static <T> T loadJson(InputStream src, Class<T> valueType) {
         // Read specifically with UTF-8 to allow any non-UTF-encoded JSON to read
-        return GeyserImpl.JSON_MAPPER.readValue(new InputStreamReader(src, StandardCharsets.UTF_8), valueType);
+        return GeyserImpl.GSON.fromJson(new InputStreamReader(src, StandardCharsets.UTF_8), valueType);
     }
 
     /**
@@ -76,7 +74,7 @@ public class FileUtils {
             //noinspection ResultOfMethodCallIgnored
             file.createNewFile();
             try (FileOutputStream fos = new FileOutputStream(file)) {
-                try (InputStream input = bootstrap.getResource(name)) {
+                try (InputStream input = bootstrap.getResourceOrThrow(name)) {
                     byte[] bytes = new byte[input.available()];
 
                     //noinspection ResultOfMethodCallIgnored
@@ -92,6 +90,18 @@ public class FileUtils {
         }
 
         return file;
+    }
+
+    /**
+     * Open the specified file or copy if from resources
+     *
+     * @param file File to open
+     * @param name Name of the resource get if needed
+     * @return File handle of the specified file
+     * @throws IOException if the file failed to copy from resource
+     */
+    public static File fileOrCopiedFromResource(File file, String name, GeyserBootstrap bootstrap) throws IOException {
+        return fileOrCopiedFromResource(file, name, Function.identity(), bootstrap);
     }
 
     /**
@@ -167,11 +177,20 @@ public class FileUtils {
      * @return the byte array of an InputStream
      */
     public static byte[] readAllBytes(String resource) {
-        try (InputStream stream = GeyserImpl.getInstance().getBootstrap().getResource(resource)) {
+        try (InputStream stream = GeyserImpl.getInstance().getBootstrap().getResourceOrThrow(resource)) {
             return stream.readAllBytes();
         } catch (IOException e) {
             throw new RuntimeException("Error while trying to read internal input stream!", e);
         }
+    }
+
+    /**
+     * @param resource the internal resource to read off from
+     * 
+     * @return the contents decoded as a UTF-8 String
+     */
+    public static String readToString(String resource) {
+        return new String(readAllBytes(resource), StandardCharsets.UTF_8);
     }
 
     /**
@@ -213,7 +232,7 @@ public class FileUtils {
      * @return a set of all the classes annotated by the given annotation
      */
     public static Set<Class<?>> getGeneratedClassesForAnnotation(String input) {
-        try (InputStream annotatedClass = GeyserImpl.getInstance().getBootstrap().getResource(input);
+        try (InputStream annotatedClass = GeyserImpl.getInstance().getBootstrap().getResourceOrThrow(input);
              BufferedReader reader = new BufferedReader(new InputStreamReader(annotatedClass))) {
             return reader.lines().map(className -> {
                 try {
@@ -226,5 +245,8 @@ public class FileUtils {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private FileUtils() {
     }
 }
